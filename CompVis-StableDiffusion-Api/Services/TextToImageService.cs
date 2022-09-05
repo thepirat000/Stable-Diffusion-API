@@ -29,9 +29,8 @@ namespace CompVis_StableDiffusion_Api.Services
         public TextToImageResponse EnqueueJob(TextToImageRequest request)
         {
             // Enqueue job
-            _log.EphemeralLog($"Enqueueing job for '{request.Prompt}'");
             var jobId = _backgroundJobClient.Enqueue(() => ProcessAsync(request, null));
-               
+            _log.EphemeralLog($"Enqueueing job {jobId} for '{request.Prompt}'");
             return new TextToImageResponse() { JobId = jobId };
         }
         
