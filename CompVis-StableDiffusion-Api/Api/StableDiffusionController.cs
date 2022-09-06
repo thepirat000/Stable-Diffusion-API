@@ -2,27 +2,30 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace CompVis_StableDiffusion_Api.Api
 {
-    [Route("api/txt2img")]
+    [Route("api/sd")]
     [ApiController]
-    public class TextToImageController : ControllerBase
+    public class StableDiffusionController : ControllerBase
     {
-        private readonly ITextToImageService _txtToImgService;
+        private readonly IStableDiffusionService _txtToImgService;
+        private readonly Settings _settings;
 
-        public TextToImageController(ITextToImageService txtToImgService)
+        public StableDiffusionController(IStableDiffusionService txtToImgService, Settings settings)
         {
             _txtToImgService = txtToImgService;
+            _settings = settings;
         }
 
         /// <summary>
         /// Enqueue a Text to Image process
         /// </summary>
         /// <param name="request">The request data</param>
-        [HttpPost]
-        public async Task<IActionResult> Process([FromBody]Dto.TextToImageRequest request)
+        [HttpPost("txt2img")]
+        public async Task<IActionResult> ProcessTextToImage([FromBody]Dto.DiffusionRequest request)
         {
             if (request?.Prompt == null || request.Prompt.Length < 3)
             {
@@ -32,16 +35,58 @@ namespace CompVis_StableDiffusion_Api.Api
             {
                 return BadRequest("Invalid version, must be 1-1, 1-2, 1-3 or 1-4");
             }
-            if (request.Samples <= 0 || request.Samples > 9)
+            if (request.Samples < 1 || request.Samples > 9)
             {
                 return BadRequest("Invalid samples, must be 1 to 9");
             }
-            if (request.Steps <= 10 || request.Steps > 100)
+            if (request.Steps < 10 || request.Steps > 100)
             {
                 return BadRequest("Invalid steps, must be 10 to 100");
             }
 
-            var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request);
+            var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request, null, null);
+            if (response?.BadRequestError != null)
+            {
+                return BadRequest(response.BadRequestError);
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Enqueue an Image to Image process
+        /// </summary>
+        /// <param name="strength">Controls the amount of noise that is added to the input image. Values that approach 100 allow for lots of variations but will also produce images that are not semantically consistent with the input. Default is 80.</param>
+        /// <param name="request">The request data</param>
+        [HttpPost("img2img")]
+        public async Task<IActionResult> ProcessImageToImage([FromForm] Dto.DiffusionRequestWithInitImage request)
+        {
+            if (request?.Prompt == null || request.Prompt.Length < 3)
+            {
+                return BadRequest("Invalid prompt");
+            }
+            if (request.Version == null || request.Version.Length != 3 || request.Version[1] != '-')
+            {
+                return BadRequest("Invalid version, must be 1-1, 1-2, 1-3 or 1-4");
+            }
+            if (request.Samples < 1 || request.Samples > 9)
+            {
+                return BadRequest("Invalid samples, must be 1 to 9");
+            }
+            if (request.Steps < 10 || request.Steps > 100)
+            {
+                return BadRequest("Invalid steps, must be 10 to 100");
+            }
+            if (request.Strength < 1 || request.Strength > 100)
+            {
+                return BadRequest("Invalid strength, must be 1 to 100");
+            }
+            if (request.InitImage == null)
+            {
+                return BadRequest("Invalid Init Image");
+            }
+            
+            var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request, request.InitImage, request.Strength);
             if (response?.BadRequestError != null)
             {
                 return BadRequest(response.BadRequestError);
@@ -143,7 +188,7 @@ namespace CompVis_StableDiffusion_Api.Api
             }
             else
             {
-                return File(attachment.Stream, attachment.MimeType, $"{docId}_{attachment.Filename}");
+                return File(attachment.Stream, attachment.MimeType, $"{docId}_{attachment.FileName}");
             }
         }
 

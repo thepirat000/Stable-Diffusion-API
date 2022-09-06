@@ -1,10 +1,27 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 
 namespace CompVis_StableDiffusion_Api.Dto
 {
+    public class DiffusionRequestWithInitImage : DiffusionRequest
+    {
+        /// <summary>
+        /// The initial image
+        /// </summary>
+        [JsonIgnore]
+        public IFormFile InitImage { get; set; }
 
-    public class TextToImageRequest
+        /// <summary>
+        /// strength for noising/unnoising the init image (0-100). 100 corresponds to full destruction of information in init image.
+        /// </summary>
+        [DefaultValue(80)]
+        public int Strength { get; set; }
+    }
+    
+    public class DiffusionRequest
     {
         /// <summary>
         /// Text prompt

@@ -13,6 +13,7 @@ using System.Text;
 using System.Reflection;
 using System.IO;
 using Microsoft.AspNetCore.HttpOverrides;
+using Raven.Client.Json.Serialization.NewtonsoftJson;
 
 namespace CompVis_StableDiffusion_Api
 {
@@ -31,31 +32,46 @@ namespace CompVis_StableDiffusion_Api
             services.AddCors();
             //services.AddRazorPages();
 
+            // Swagger
             services.AddSwaggerGen(c =>
             {
                 c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory,
                 $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
             });
 
+            // Settings
             var settings = new Settings();
-
             services.AddSingleton(settings);
+            
+            // Services
             services.AddScoped<ILogService, LogService>();
-            services.AddScoped<IShellService, ShellService>();
-            //services.AddScoped<IShellService, FakeShellService>();
-            services.AddScoped<IStorageService, StorageService>();
-            services.AddScoped<ITextToImageService, TextToImageService>();
 
+            //services.AddScoped<IShellService, ShellService>();
+            services.AddScoped<IShellService, FakeShellService>();
+            
+            services.AddScoped<IStorageService, StorageService>();
+            services.AddScoped<IStableDiffusionService, StableDiffusionService>();
+
+            // Raven DB
             var store = new DocumentStore
             {
                 Urls = new[] { settings.StorageConnectionString },
                 Database = settings.StorageDatabase
             };
+            store.Conventions.Serialization = new NewtonsoftJsonSerializationConventions()
+            {
+                CustomizeJsonSerializer = serializer =>
+                {
+                    serializer.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                }
+            };
             store.Initialize();
             services.AddSingleton<IDocumentStore>(store);
 
-            System.IO.Directory.CreateDirectory(settings.OutputDir);
+            // Dirs
+            System.IO.Directory.CreateDirectory(settings.CacheDir);
 
+            // Hangfire
             services.AddHangfire(c => c
                 .UseMemoryStorage());
             
