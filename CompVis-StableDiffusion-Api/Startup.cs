@@ -46,8 +46,8 @@ namespace CompVis_StableDiffusion_Api
             // Services
             services.AddScoped<ILogService, LogService>();
 
-            //services.AddScoped<IShellService, ShellService>();
-            services.AddScoped<IShellService, FakeShellService>();
+            services.AddScoped<IShellService, ShellService>();
+            //services.AddScoped<IShellService, FakeShellService>();
             
             services.AddScoped<IStorageService, StorageService>();
             services.AddScoped<IStableDiffusionService, StableDiffusionService>();
