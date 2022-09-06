@@ -22,7 +22,7 @@ namespace CompVis_StableDiffusion_Api.Api
         /// </summary>
         /// <param name="request">The request data</param>
         [HttpPost]
-        public IActionResult Process([FromBody]Dto.TextToImageRequest request)
+        public async Task<IActionResult> Process([FromBody]Dto.TextToImageRequest request)
         {
             if (request?.Prompt == null || request.Prompt.Length < 3)
             {
@@ -40,8 +40,12 @@ namespace CompVis_StableDiffusion_Api.Api
             {
                 return BadRequest("Invalid steps, must be 10 to 100");
             }
-                      
-            var response = _txtToImgService.EnqueueJob(request);
+
+            var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request);
+            if (response?.BadRequestError != null)
+            {
+                return BadRequest(response.BadRequestError);
+            }
 
             return Ok(response);
         }
@@ -49,37 +53,53 @@ namespace CompVis_StableDiffusion_Api.Api
         /// <summary>
         /// Returns the status of a job processing
         /// </summary>
-        /// <param name="jobId">The job ID</param>
+        /// <param name="docId">The document ID</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<IActionResult> Status([FromQuery(Name = "j")] string jobId)
+        public async Task<IActionResult> Status([FromQuery(Name = "d")] string docId)
         {
-            if (jobId.Length < 3)
+            if (string.IsNullOrEmpty(docId))
             {
-                return BadRequest("Invalid Job ID");
+                return BadRequest("Invalid Document ID");
             }
-            var jobStatus = await _txtToImgService.GetJobStatus(jobId);
-            if (jobStatus == null)
+            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId);
+            if (document == null)
             {
                 return new NoContentResult();
             }
 
-            return Ok(jobStatus);
+            return Ok(document);
+        }
+
+        /// <summary>
+        /// Returns the jobs for the current client
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("query")]
+        public async Task<IActionResult> Query()
+        {
+            var documents = await _txtToImgService.GetDocumentsForClientAsync(GetCurrentClientId());
+            if (documents == null || documents.Count == 0)
+            {
+                return new NoContentResult();
+            }
+
+            return Ok(documents);
         }
 
         /// <summary>
         /// Cancels a running job
         /// </summary>
-        /// <param name="jobId">The job ID</param>
+        /// <param name="docId">The document ID</param>
         /// <returns></returns>
         [HttpDelete]
-        public async Task<IActionResult> Cancel([FromQuery(Name = "j")] string jobId)
+        public async Task<IActionResult> Cancel([FromQuery(Name = "d")] string docId)
         {
-            if (jobId.Length < 3)
+            if (string.IsNullOrEmpty(docId))
             {
-                return BadRequest("Invalid Job ID");
+                return BadRequest("Invalid document ID");
             }
-            var deleted = await _txtToImgService.CancelJobAsync(jobId);
+            var deleted = await _txtToImgService.CancelJobAsync(GetCurrentClientId(), docId);
             
             return deleted ? Ok() : NoContent();
         }
@@ -87,21 +107,22 @@ namespace CompVis_StableDiffusion_Api.Api
         /// <summary>
         /// Downloads an image result of a job
         /// </summary>
-        /// <param name="jobId">The job ID</param>
+        /// <param name="docId">The document ID</param>
         /// <param name="imageIndex">The image index to download. Default is 0.</param>
+        /// <param name="mode">The download mode (0=direct, 1=attachment). Default is 0.</param>
         /// <returns></returns>
         [HttpGet("dl")]
-        public async Task<IActionResult> Download([FromQuery(Name = "j")] string jobId, [FromQuery(Name = "i")] int imageIndex = 0)
+        public async Task<IActionResult> Download([FromQuery(Name = "d")] string docId, [FromQuery(Name = "i")] int imageIndex = 0, [FromQuery(Name = "m")]int mode = 0)
         {
-            if (jobId.Length < 3)
+            if (string.IsNullOrEmpty(docId))
             {
-                return BadRequest("Invalid Job ID");
+                return BadRequest("Invalid document ID");
             }
             if (imageIndex < 0 || imageIndex > 9)
             {
                 return BadRequest("Invalid image index");
             }
-            var document = await _txtToImgService.GetJobStatus(jobId);
+            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId);
             if (document == null)
             {
                 return NoContent();
@@ -115,8 +136,20 @@ namespace CompVis_StableDiffusion_Api.Api
                 return BadRequest("Invalid image index");
             }
             var attachment = new Dto.Attachment(document.FileRefs[imageIndex]);
-                        
-            return File(attachment.Stream, attachment.MimeType, $"{jobId}_{attachment.Filename}");
+            
+            if (mode == 0)
+            {
+                return new FileStreamResult(attachment.Stream, attachment.MimeType);
+            }
+            else
+            {
+                return File(attachment.Stream, attachment.MimeType, $"{docId}_{attachment.Filename}");
+            }
+        }
+
+        private string GetCurrentClientId()
+        {
+            return Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
     }
 }

@@ -12,6 +12,7 @@ using Audit.Core;
 using System.Text;
 using System.Reflection;
 using System.IO;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace CompVis_StableDiffusion_Api
 {
@@ -40,8 +41,8 @@ namespace CompVis_StableDiffusion_Api
 
             services.AddSingleton(settings);
             services.AddScoped<ILogService, LogService>();
-            services.AddScoped<IShellService, ShellService>();
-            //services.AddScoped<IShellService, FakeShellService>();
+            //services.AddScoped<IShellService, ShellService>();
+            services.AddScoped<IShellService, FakeShellService>();
             services.AddScoped<IStorageService, StorageService>();
             services.AddScoped<ITextToImageService, TextToImageService>();
 
@@ -87,6 +88,11 @@ namespace CompVis_StableDiffusion_Api
             app.UseStaticFiles();
                         
             app.UseRouting();
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             app.UseAuthorization();
             app.UseCors(options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());

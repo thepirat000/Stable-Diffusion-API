@@ -1,7 +1,9 @@
 ﻿using CompVis_StableDiffusion_Api.Dto;
 using Hangfire;
 using Hangfire.Server;
+using Hangfire.Storage;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,71 +28,85 @@ namespace CompVis_StableDiffusion_Api.Services
             _settings = settings;
         }
 
-        public TextToImageResponse EnqueueJob(TextToImageRequest request)
+        public async Task<TextToImageResponse> EnqueueJobAsync(string clientId, TextToImageRequest request)
         {
+            // Validate duplications
+            if (await _storageService.IsDuplicatedAsync(clientId, request))
+            {
+                return new TextToImageResponse() { BadRequestError = "Duplicated job" };
+            }
+
+            // Create the document on DB
+            _log.EphemeralLog($"Storing job. Client {clientId} for '{request.Prompt}'");
+            var document = await _storageService.CreateAsync(clientId, request);
+
             // Enqueue job
-            var jobId = _backgroundJobClient.Enqueue(() => ProcessAsync(request, null));
-            _log.EphemeralLog($"Enqueueing job {jobId} for '{request.Prompt}'");
-            return new TextToImageResponse() { JobId = jobId };
+            var jobId = _backgroundJobClient.Enqueue(() => ProcessAsync(document, null));
+            _log.EphemeralLog($"Enqueueing job {jobId}. Client {clientId} for '{request.Prompt}'");
+
+            // Update the document with the job ID
+            await _storageService.StartAsync(document.Id, jobId);
+
+            return new TextToImageResponse() { DocumentId = document.Id, JobId = jobId };
         }
         
-        public async Task<TextToImageDocument> GetJobStatus(string jobId)
+        public async Task<TextToImageDocument> GetDocumentAsync(string clientId, string documentId)
         {
-            var document = await _storageService.GetAsync(jobId);
-            if (document == null)
+            var document = await _storageService.GetDocumentAsync(documentId);
+            
+            if (document?.ClientId != null && document.ClientId != clientId) 
             {
-                //
-                using (var cnn = JobStorage.Current.GetConnection())
-                {
-                    var jobData = cnn.GetJobData(jobId);
-                    if (jobData != null)
-                    {
-                        document = new TextToImageDocument()
-                        {
-                            JobId = jobId,
-                            Status = jobData.State == "Enqueued" ? 0 : -1
-                        };
-                    }
-                }
+                throw new ArgumentException("Wrong client ID");
             }
             return document;
         }
 
-        public async Task<bool> CancelJobAsync(string jobId)
+        public async Task<List<TextToImageDocument>> GetDocumentsForClientAsync(string clientId)
         {
-            var deleted = _backgroundJobClient.Delete(jobId);
-            if (deleted)
+            return await _storageService.GetDocumentsForClientAsync(clientId);
+        }
+        
+        public async Task<bool> CancelJobAsync(string clientId, string documentId)
+        {
+            var document = await _storageService.GetDocumentAsync(documentId);
+            if (document != null && document.ClientId != clientId)
             {
-                var doc = await _storageService.GetAsync(jobId);
-                if (doc != null && doc.Status != 100)
+                throw new ArgumentException("Wrong client ID");
+            }
+            
+            var jobId = document.JobId;
+            bool deleted = false;
+            if (jobId != null)
+            {
+                deleted = _backgroundJobClient.Delete(jobId);
+                if (document != null)
                 {
-                    await _storageService.UpdateStatusAsync(jobId, -2, "Cancelled by user");
+                    await _storageService.CancelAsync(documentId);
                 }
             }
+            
             return deleted;
         }
 
         // Main Job Process method
-        public async Task ProcessAsync(TextToImageRequest request, PerformContext context)
+        [JobDisplayName("Txt2Img Job")]
+        public async Task ProcessAsync(TextToImageDocument document, PerformContext context)
         {
+            var request = document.Request;
+            var clientId = document.ClientId;
+            var documentId = document.Id;
             var jobId = context.BackgroundJob.Id;
+            var now = DateTimeOffset.Now;
 
-            // Store document
-            _log.EphemeralLog($"Starting job {jobId} for '{request.Prompt}'");
-            var document = new TextToImageDocument()
-            {
-                JobId = jobId,
-                Request = request,
-                Status = 1
-            };
-            await _storageService.InsertAsync(document);
+            // Start the job
+            _log.EphemeralLog($"Starting job {jobId}. Document {documentId}. Client {clientId} for '{request.Prompt}'");
 
             string error = null;
             string[] files = null;
             ExecuteResult execResult = null;
             try
             {
-                // Processing
+                // Process
                 execResult = await ExecuteCondaScriptAsync(request, jobId);
             }
             catch (Exception ex)
@@ -115,13 +131,13 @@ namespace CompVis_StableDiffusion_Api.Services
                 else
                 {
                     // Attach files
-                    _log.EphemeralLog($"Attaching {files.Length} files to job {jobId} for '{request.Prompt}'");
-                    await _storageService.AttachAsync(jobId, files.Select(f => new Attachment(f)).ToArray());
+                    _log.EphemeralLog($"Attaching {files.Length} files to job {jobId} document {documentId} for '{request.Prompt}'");
+                    await _storageService.AttachAsync(documentId, files.Select(f => new Attachment(f)).ToArray());
                 }
             }
 
             // Update status to Completed or Error
-            await _storageService.UpdateStatusAsync(jobId, error == null ? 100 : -1, error);
+            await _storageService.EndAsync(documentId, error);
         }
 
         private async Task<ExecuteResult> ExecuteCondaScriptAsync(TextToImageRequest request, string jobId)

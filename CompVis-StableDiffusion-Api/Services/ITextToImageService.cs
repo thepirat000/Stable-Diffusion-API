@@ -1,12 +1,14 @@
 ﻿using CompVis_StableDiffusion_Api.Dto;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CompVis_StableDiffusion_Api.Services
 {
     public interface ITextToImageService
     {
-        TextToImageResponse EnqueueJob(TextToImageRequest request);
-        Task<TextToImageDocument> GetJobStatus(string jobId);
-        Task<bool> CancelJobAsync(string jobId);
+        Task<TextToImageResponse> EnqueueJobAsync(string clientId, TextToImageRequest request);
+        Task<TextToImageDocument> GetDocumentAsync(string clientId, string documentId);
+        Task<bool> CancelJobAsync(string clientId, string documentId);
+        Task<List<TextToImageDocument>> GetDocumentsForClientAsync(string clientId);
     }
 }

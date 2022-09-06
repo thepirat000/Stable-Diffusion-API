@@ -9,6 +9,7 @@ namespace CompVis_StableDiffusion_Api.Dto
         /// <summary>
         /// Text prompt
         /// </summary>
+        [Required]
         [MinLength(3)]
         public string Prompt { get; set; }
         /// <summary>
@@ -32,5 +33,11 @@ namespace CompVis_StableDiffusion_Api.Dto
         /// </summary>
         [DefaultValue(0)]
         public int Seed { get; set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"'{Prompt}' (v{Version}). {Samples} samples, {Steps} steps";
+        }
     }
 }
