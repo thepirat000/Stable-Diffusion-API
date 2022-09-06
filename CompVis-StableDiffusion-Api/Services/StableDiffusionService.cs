@@ -182,7 +182,7 @@ namespace CompVis_StableDiffusion_Api.Services
             {
                 // img2img
                 double strengthDbl = (double)strength.GetValueOrDefault(80) / 100;
-                pythonCommand = $"python scripts/img2img.py --prompt \"{prompt}\" --plms --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --init-img \"{initImageFilePath}\" --strength {strengthDbl} --outdir {outputDir}";
+                pythonCommand = $"python scripts/img2img.py --prompt \"{prompt}\" --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --init-img \"{initImageFilePath}\" --strength {strengthDbl} --outdir {outputDir}";
             }
             else
             {
