@@ -41,8 +41,8 @@ namespace CompVis_StableDiffusion_Api
 
             services.AddSingleton(settings);
             services.AddScoped<ILogService, LogService>();
-            //services.AddScoped<IShellService, ShellService>();
-            services.AddScoped<IShellService, FakeShellService>();
+            services.AddScoped<IShellService, ShellService>();
+            //services.AddScoped<IShellService, FakeShellService>();
             services.AddScoped<IStorageService, StorageService>();
             services.AddScoped<ITextToImageService, TextToImageService>();
 
