@@ -89,14 +89,15 @@ namespace CompVis_StableDiffusion_Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI();
             }
             else
             {
                 app.UseExceptionHandler("/Error");
                 app.UseHsts();
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHangfireDashboard();
 
