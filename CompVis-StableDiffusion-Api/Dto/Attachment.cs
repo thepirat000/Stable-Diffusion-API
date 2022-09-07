@@ -6,21 +6,6 @@ namespace CompVis_StableDiffusion_Api.Dto
     public class Attachment
     {
         /// <summary>
-        /// Stores the file from a stream its full file system path
-        /// </summary>
-        public static Attachment CreateFromStream(Stream stream, string fullPath)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-
-            using (var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
-            {
-                stream.Seek(0L, SeekOrigin.Begin);
-                stream.CopyTo(fileStream);
-            }
-            return new Attachment(fullPath);
-        }
-
-        /// <summary>
         /// Read the file from its full file system path
         /// </summary>
         public Attachment(string fullPath)
