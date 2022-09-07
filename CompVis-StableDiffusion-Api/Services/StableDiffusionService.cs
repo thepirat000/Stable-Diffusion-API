@@ -177,7 +177,7 @@ namespace CompVis_StableDiffusion_Api.Services
             var inputFolder = GetInputFolder(documentId);
             Directory.CreateDirectory(inputFolder);
 
-            var originalFilePath = Path.Combine(, $"input{extension}");
+            var originalFilePath = Path.Combine(inputFolder, $"input{extension}");
             using (var fileStream = new FileStream(originalFilePath, FileMode.Create, FileAccess.Write))
             {
                 initImageStream.CopyTo(fileStream);
