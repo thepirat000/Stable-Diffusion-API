@@ -174,13 +174,16 @@ namespace CompVis_StableDiffusion_Api.Services
         // Executes the script to resize input image, returns the path o the image
         private async Task<string> ExecuteFixInitImageScriptAsync(string documentId, Stream initImageStream, string extension)
         {
-            var originalFilePath = Path.Combine(GetInputFolder(documentId), $"input{extension}");
+            var inputFolder = GetInputFolder(documentId);
+            Directory.CreateDirectory(inputFolder);
+
+            var originalFilePath = Path.Combine(, $"input{extension}");
             using (var fileStream = new FileStream(originalFilePath, FileMode.Create, FileAccess.Write))
             {
                 initImageStream.CopyTo(fileStream);
             }
 
-            var resizeFilePath = Path.Combine(GetInputFolder(documentId), $"input_resize.jpg");
+            var resizeFilePath = Path.Combine(inputFolder, $"input_resize.jpg");
             var commands = new string[]
             {
                 @$"./FixInputImage.ps1 ""{originalFilePath}"" ""{resizeFilePath}"""
