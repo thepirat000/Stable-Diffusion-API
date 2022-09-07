@@ -185,7 +185,7 @@ namespace CompVis_StableDiffusion_Api.Services
             
             var result = await _shellService.ExecuteWithTimeoutAsync(commands, GetScriptsFolder(), 3, null, null, "powershell.exe");
 
-            if (result.ExitCode != 0 || result.StdError != null)
+            if (result.ExitCode != 0 || !string.IsNullOrEmpty(result.StdError))
             {
                 var err = $"ERROR processing input image: ExitCode {result.ExitCode}. {result.StdError}";
                 _log.EphemeralLog(err, true);
@@ -203,7 +203,7 @@ namespace CompVis_StableDiffusion_Api.Services
 
             var result = await _shellService.ExecuteWithTimeoutAsync(commands, GetScriptsFolder(), 3, null, null, "powershell.exe");
 
-            if (result.ExitCode != 0 || result.StdError != null)
+            if (result.ExitCode != 0 || !string.IsNullOrEmpty(result.StdError))
             {
                 var err = $"ERROR processing output images: ExitCode {result.ExitCode}. {result.StdError}";
                 _log.EphemeralLog(err, true);
