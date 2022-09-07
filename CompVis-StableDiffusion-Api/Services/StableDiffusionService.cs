@@ -134,7 +134,7 @@ namespace CompVis_StableDiffusion_Api.Services
             ExecuteResult execResult = null;
             try
             {
-                // Fix input
+                // Fix input image
                 await ExecuteFixInitImageScriptAsync(documentId, initImageFilePath);
                 // Execute Conda commands
                 execResult = await ExecuteCondaScriptAsync(documentId, request, initImageFilePath, strength);
