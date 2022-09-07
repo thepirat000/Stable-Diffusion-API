@@ -42,8 +42,9 @@ namespace CompVis_StableDiffusion_Api.Services
             Attachment initImage = null;
             if (initImageFormFile != null)
             {
-                var initImageFilePath = Path.Combine(_settings.CacheDir, documentId, "input", initImageFormFile.FileName);
-                initImage = Attachment.CreateFromStream(initImageFormFile.OpenReadStream(), initImageFilePath);
+                // Resize the init image if needed
+                var initImageFilePath = await ExecuteFixInitImageScriptAsync(documentId, initImageFormFile.OpenReadStream(), Path.GetExtension(initImageFormFile.FileName));
+                initImage = new Attachment(initImageFilePath);
             }
 
             // Create the document on DB
@@ -134,8 +135,6 @@ namespace CompVis_StableDiffusion_Api.Services
             ExecuteResult execResult = null;
             try
             {
-                // Fix input image
-                await ExecuteFixInitImageScriptAsync(documentId, initImageFilePath);
                 // Execute Conda commands
                 execResult = await ExecuteCondaScriptAsync(documentId, request, initImageFilePath, strength);
                 // Fix output
@@ -172,15 +171,19 @@ namespace CompVis_StableDiffusion_Api.Services
             await _storageService.EndAsync(documentId, jobId, error);
         }
 
-        private async Task ExecuteFixInitImageScriptAsync(string documentId, string initImageFilePath)
+        // Executes the script to resize input image, returns the path o the image
+        private async Task<string> ExecuteFixInitImageScriptAsync(string documentId, Stream initImageStream, string extension)
         {
-            if (initImageFilePath == null) 
+            var originalFilePath = Path.Combine(GetInputFolder(documentId), $"input{extension}");
+            using (var fileStream = new FileStream(originalFilePath, FileMode.Create, FileAccess.Write))
             {
-                return;
+                initImageStream.CopyTo(fileStream);
             }
+
+            var resizeFilePath = Path.Combine(GetInputFolder(documentId), $"input_resize.jpg");
             var commands = new string[]
             {
-                @$"./FixInputImage.ps1 ""{initImageFilePath}"""
+                @$"./FixInputImage.ps1 ""{originalFilePath}"" ""{resizeFilePath}"""
             };
             
             var result = await _shellService.ExecuteWithTimeoutAsync(commands, GetScriptsFolder(), 3, null, null, "powershell.exe");
@@ -191,11 +194,20 @@ namespace CompVis_StableDiffusion_Api.Services
                 _log.EphemeralLog(err, true);
                 throw new ArgumentException(err);
             }
+
+            if (File.Exists(resizeFilePath))
+            {
+                return resizeFilePath;
+            }
+            else
+            {
+                return originalFilePath;
+            }
         }
 
         private async Task ExecuteFixOutputImagesScriptAsync(string documentId)
         {
-            var outDir = GetOutputDir(documentId);
+            var outDir = GetOutputFolder(documentId);
             var commands = new string[]
             {
                 @$"./FixOutputImage.ps1 ""{outDir}"""
@@ -257,13 +269,17 @@ namespace CompVis_StableDiffusion_Api.Services
 
         private string[] GetOutputFiles(string documentId)
         {
-            var path = GetOutputDir(documentId);
+            var path = GetOutputFolder(documentId);
             return Directory.GetFiles(path, "*.jpg").Union(Directory.GetFiles(path, "*.png")).ToArray();
         }
 
-        private string GetOutputDir(string documentId)
+        private string GetOutputFolder(string documentId)
         {
             return Path.Combine(_settings.CacheDir, documentId, "samples");
+        }
+        private string GetInputFolder(string documentId)
+        {
+            return Path.Combine(_settings.CacheDir, documentId, "input");
         }
 
         private string GetScriptsFolder()

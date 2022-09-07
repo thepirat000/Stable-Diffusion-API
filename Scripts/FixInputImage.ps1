@@ -1,25 +1,28 @@
-﻿# Execute like this: 
-# powershell -File FixInputImage.ps1 "C:\cache\folder\initimagefilename.webp" 512
+﻿# Resize and JPG recompress an image
+#
+# Execute like this: 
+# powershell -File FixInputImage.ps1 "C:\cache\folder\initimagefilename.webp" "C:\cache\folder\input.jpg" 512
 
 param (
-  [Parameter(Mandatory=$true)][String]$filepath,
+  [Parameter(Mandatory=$true)][String]$inputfilepath,
+  [Parameter(Mandatory=$true)][String]$outputfilepath,
   [int]$maxDimension=512
 )
 
 $ErrorActionPreference = "Stop"
 
-$f = Get-Item $filepath
+$f = Get-Item $inputfilepath
    
 $dimensions = (ffprobe -v error -select_streams v -show_entries stream=width,height -of csv=p=0:s=x $f.FullName).Split("x")
 $width = [int]$dimensions[0]
 $height = [int]$dimensions[1]
 
-$outfile = (split-path $filepath) + '\' + $f.BaseName + '_resize.jpg'
+$outfile = $outputfilepath
 Write-Host $outfile
 
 if ($f.Length -lt 0.1MB) {
     Write-Host "Skipping $($f.Name)"
-    exit
+    Exit 0
 }
 
 if ($width -gt $height) {
@@ -42,9 +45,5 @@ if ($width -gt $height) {
 
 if (-not(Test-Path $outfile)) {
     Write-Error "Error processing $($f.FullName)"
-    continue;
+    Exit 1
 }
-
-Remove-Item $f.FullName -Force
-
-Rename-Item $outfile $f.FullName -Force
