@@ -99,7 +99,10 @@ namespace CompVis_StableDiffusion_Api
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireAuthorizationFilter() }
+            });
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
