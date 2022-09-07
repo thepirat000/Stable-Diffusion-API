@@ -23,5 +23,5 @@ for ($i=0; $i -lt $files.Count; $i++) {
         continue;
     }
 
-    Remove-Item $f.FullName -Confirm
+    Remove-Item $f.FullName -Force
 }

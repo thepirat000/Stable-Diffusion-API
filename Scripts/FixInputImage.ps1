@@ -14,7 +14,8 @@ $dimensions = (ffprobe -v error -select_streams v -show_entries stream=width,hei
 $width = [int]$dimensions[0]
 $height = [int]$dimensions[1]
 
-$outfile = $f.BaseName + '_resize.jpg'
+$outfile = (split-path $filepath) + '\' + $f.BaseName + '_resize.jpg'
+Write-Host $outfile
 
 if ($f.Length -lt 0.1MB) {
     Write-Host "Skipping $($f.Name)"
@@ -44,6 +45,6 @@ if (-not(Test-Path $outfile)) {
     continue;
 }
 
-Remove-Item $f.FullName -Confirm
+Remove-Item $f.FullName -Force
 
-Rename-Item $outfile $f.FullName -Confirm
+Rename-Item $outfile $f.FullName -Force
