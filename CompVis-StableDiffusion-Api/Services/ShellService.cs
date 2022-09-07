@@ -18,7 +18,7 @@ namespace CompVis_StableDiffusion_Api.Services
         }
         
         public async Task<ExecuteResult> ExecuteWithTimeoutAsync(string[] commands, string? workingDirectory = null, int timeoutMinutes = 15,
-            Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null)
+            Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null, string processName = "cmd.exe")
         {
             _log.EphemeralLog("Will execute commands: " + string.Join(Environment.NewLine, commands));
             var stdOutputBuilder = new StringBuilder();
@@ -28,7 +28,7 @@ namespace CompVis_StableDiffusion_Api.Services
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = @"cmd.exe",
+                    FileName = processName,
                     RedirectStandardInput = true,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,

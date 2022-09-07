@@ -16,7 +16,7 @@ namespace CompVis_StableDiffusion_Api.Services
             _settings = settings;
         }
         
-        public async Task<ExecuteResult> ExecuteWithTimeoutAsync(string[] commands, string? workingDirectory = null, int timeoutMinutes = 15, Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null)
+        public async Task<ExecuteResult> ExecuteWithTimeoutAsync(string[] commands, string? workingDirectory = null, int timeoutMinutes = 15, Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null, string processName = "cmd.exe")
         {
             double percentage = 0;
             int i = 0;

@@ -180,12 +180,12 @@ namespace CompVis_StableDiffusion_Api.Services
             }
             var commands = new string[]
             {
-                @$"powershell -File .\PSScripts\FixInputImage.ps1 ""{initImageFilePath}"""
+                @$"./FixInputImage.ps1 ""{initImageFilePath}"""
             };
+            
+            var result = await _shellService.ExecuteWithTimeoutAsync(commands, GetScriptsFolder(), 3, null, null, "powershell.exe");
 
-            var result = await _shellService.ExecuteWithTimeoutAsync(commands, null, 3);
-
-            if (result.ExitCode != 0)
+            if (result.ExitCode != 0 || result.StdError != null)
             {
                 var err = $"ERROR processing input image: ExitCode {result.ExitCode}. {result.StdError}";
                 _log.EphemeralLog(err, true);
@@ -198,12 +198,12 @@ namespace CompVis_StableDiffusion_Api.Services
             var outDir = GetOutputDir(documentId);
             var commands = new string[]
             {
-                @$"powershell -File .\PSScripts\FixOutputImage.ps1 ""{outDir}"""
+                @$"./FixOutputImage.ps1 ""{outDir}"""
             };
 
-            var result = await _shellService.ExecuteWithTimeoutAsync(commands, null, 3);
+            var result = await _shellService.ExecuteWithTimeoutAsync(commands, GetScriptsFolder(), 3, null, null, "powershell.exe");
 
-            if (result.ExitCode != 0)
+            if (result.ExitCode != 0 || result.StdError != null)
             {
                 var err = $"ERROR processing output images: ExitCode {result.ExitCode}. {result.StdError}";
                 _log.EphemeralLog(err, true);
@@ -246,30 +246,29 @@ namespace CompVis_StableDiffusion_Api.Services
                 e =>
                 {
                     _log.EphemeralLog("STDERR: " + e);
-                    ProcessOutput(documentId, request, e, initImageFilePath != null, true);
                 },
                 o =>
                 {
                     _log.EphemeralLog("STDOUT: " + o);
-                    ProcessOutput(documentId, request, o, initImageFilePath != null, false);
                 });
             
             return result;
         }
 
-        private void ProcessOutput(string documentId, DiffusionRequest request, string line, bool isImg2Img, bool isStdErr)
-        {
-        }
-
         private string[] GetOutputFiles(string documentId)
         {
             var path = GetOutputDir(documentId);
-            return Directory.GetFiles(path, "*.jpg");
+            return Directory.GetFiles(path, "*.jpg").Union(Directory.GetFiles(path, "*.png")).ToArray();
         }
 
         private string GetOutputDir(string documentId)
         {
             return Path.Combine(_settings.CacheDir, documentId, "samples");
+        }
+
+        private string GetScriptsFolder()
+        {
+            return Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "PSScripts");
         }
     }
 }

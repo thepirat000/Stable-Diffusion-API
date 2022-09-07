@@ -7,6 +7,6 @@ namespace CompVis_StableDiffusion_Api.Services
     public interface IShellService
     {
         Task<ExecuteResult> ExecuteWithTimeoutAsync(string[] commands, string? workingDirectory = null, int timeoutMinutes = 15,
-            Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null);
+            Action<string> stdErrDataReceivedCallback = null, Action<string> stdOutDataReceivedCallback = null, string processName = "cmd.exe");
     }
 }
