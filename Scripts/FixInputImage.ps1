@@ -44,6 +44,6 @@ if (-not(Test-Path $outfile)) {
     continue;
 }
 
-Remove-Item $f.FullName
+Remove-Item $f.FullName -Confirm
 
-Rename-Item $outfile $f.FullName
+Rename-Item $outfile $f.FullName -Confirm
