@@ -1,13 +1,11 @@
 ﻿using CompVis_StableDiffusion_Api.Dto;
 using Hangfire;
 using Hangfire.Server;
-using Hangfire.Storage;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CompVis_StableDiffusion_Api.Services
@@ -136,8 +134,12 @@ namespace CompVis_StableDiffusion_Api.Services
             ExecuteResult execResult = null;
             try
             {
-                // Process
+                // Fix input
+                await ExecuteFixInitImageScriptAsync(documentId, initImageFilePath);
+                // Execute Conda commands
                 execResult = await ExecuteCondaScriptAsync(documentId, request, initImageFilePath, strength);
+                // Fix output
+                await ExecuteFixOutputImagesScriptAsync(documentId);
             }
             catch (Exception ex)
             {
@@ -170,6 +172,45 @@ namespace CompVis_StableDiffusion_Api.Services
             await _storageService.EndAsync(documentId, jobId, error);
         }
 
+        private async Task ExecuteFixInitImageScriptAsync(string documentId, string initImageFilePath)
+        {
+            if (initImageFilePath == null) 
+            {
+                return;
+            }
+            var commands = new string[]
+            {
+                @$"powershell -File .\PSScripts\FixInputImage.ps1 ""{initImageFilePath}"""
+            };
+
+            var result = await _shellService.ExecuteWithTimeoutAsync(commands, null, 3);
+
+            if (result.ExitCode != 0)
+            {
+                var err = $"ERROR processing input image: ExitCode {result.ExitCode}. {result.StdError}";
+                _log.EphemeralLog(err, true);
+                throw new ArgumentException(err);
+            }
+        }
+
+        private async Task ExecuteFixOutputImagesScriptAsync(string documentId)
+        {
+            var outDir = GetOutputDir(documentId);
+            var commands = new string[]
+            {
+                @$"powershell -File .\PSScripts\FixOutputImage.ps1 ""{outDir}"""
+            };
+
+            var result = await _shellService.ExecuteWithTimeoutAsync(commands, null, 3);
+
+            if (result.ExitCode != 0)
+            {
+                var err = $"ERROR processing output images: ExitCode {result.ExitCode}. {result.StdError}";
+                _log.EphemeralLog(err, true);
+                throw new ArgumentException(err);
+            }
+        }
+
         private async Task<ExecuteResult> ExecuteCondaScriptAsync(string documentId, DiffusionRequest request, string initImageFilePath, int? strength)
         {
             var prompt = request.Prompt = request.Prompt.Replace("\\", "").Replace("\"", "");
@@ -198,30 +239,37 @@ namespace CompVis_StableDiffusion_Api.Services
                 "conda deactivate"
             };
 
-            var sbStdErr = new StringBuilder();
-            var sbStdOut = new StringBuilder();
             var result = await _shellService.ExecuteWithTimeoutAsync(
                 commands,
                 workingDir,
                 14,
                 e =>
                 {
-                    sbStdErr.AppendLine(e);
                     _log.EphemeralLog("STDERR: " + e);
+                    ProcessOutput(documentId, request, e, initImageFilePath != null, true);
                 },
                 o =>
                 {
-                    sbStdOut.AppendLine(o);
                     _log.EphemeralLog("STDOUT: " + o);
+                    ProcessOutput(documentId, request, o, initImageFilePath != null, false);
                 });
             
             return result;
         }
 
+        private void ProcessOutput(string documentId, DiffusionRequest request, string line, bool isImg2Img, bool isStdErr)
+        {
+        }
+
         private string[] GetOutputFiles(string documentId)
         {
-            var path = Path.Combine(_settings.CacheDir, documentId, "samples");
-            return Directory.GetFiles(path, "*.png");
+            var path = GetOutputDir(documentId);
+            return Directory.GetFiles(path, "*.jpg");
+        }
+
+        private string GetOutputDir(string documentId)
+        {
+            return Path.Combine(_settings.CacheDir, documentId, "samples");
         }
     }
 }

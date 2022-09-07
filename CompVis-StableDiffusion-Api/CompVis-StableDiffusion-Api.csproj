@@ -19,7 +19,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="PSScripts\" />
     <Folder Include="Pages\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Scripts\FixInputImage.ps1" Link="PSScripts\FixInputImage.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\Scripts\FixOutputImage.ps1" Link="PSScripts\FixOutputImage.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
