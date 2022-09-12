@@ -125,13 +125,6 @@ namespace CompVis_StableDiffusion_Api.Services
 
         private async Task ProcessImplAsync(string clientId, string documentId, string jobId, DiffusionRequest request, Attachment initImage, int? strength)
         {
-            if (await _storageService.IsDuplicatedAsync(clientId, request, initImage?.FileName))
-            {
-                _log.EphemeralLog($"Duplicated job found, will ignore request {documentId} for client {clientId}");
-                await _storageService.EndAsync(documentId, jobId, "Duplicated job");
-                return;
-            }
-
             var now = DateTimeOffset.Now;
 
             // Start the job
