@@ -55,7 +55,7 @@ namespace CompVis_StableDiffusion_Api.Services
             string jobId;
             if (initImage != null)
             {
-                jobId = _backgroundJobClient.Enqueue(() => ProcessImageToImageAsync(clientId, documentId, request, initImage, strength, null));
+                jobId = _backgroundJobClient.Enqueue(() => ProcessImageToImageAsync(clientId, documentId, request, initImage.FilePath, strength, null));
                 _log.EphemeralLog($"Enqueueing Img2Img job {jobId}. Client {clientId} for image '{initImage.FilePath}' prompt '{request.Prompt}'");
             }
             else
@@ -111,9 +111,9 @@ namespace CompVis_StableDiffusion_Api.Services
 
         // Main Job Process method for Img2Img
         [JobDisplayName("img2img {0} {1}")]
-        public async Task ProcessImageToImageAsync(string clientId, string documentId, DiffusionRequest request, Attachment initImage, int? strength, PerformContext context)
+        public async Task ProcessImageToImageAsync(string clientId, string documentId, DiffusionRequest request, string initImageFilePath, int? strength, PerformContext context)
         {
-            await ProcessImplAsync(clientId, documentId, context.BackgroundJob.Id, request, initImage, strength);
+            await ProcessImplAsync(clientId, documentId, context.BackgroundJob.Id, request, initImageFilePath, strength);
         }
 
         // Main Job Process method for Txt2Img
@@ -123,7 +123,7 @@ namespace CompVis_StableDiffusion_Api.Services
             await ProcessImplAsync(clientId, documentId, context.BackgroundJob.Id, request, null, null);
         }
 
-        private async Task ProcessImplAsync(string clientId, string documentId, string jobId, DiffusionRequest request, Attachment initImage, int? strength)
+        private async Task ProcessImplAsync(string clientId, string documentId, string jobId, DiffusionRequest request, string initImageFilePath, int? strength)
         {
             var now = DateTimeOffset.Now;
 
@@ -136,7 +136,7 @@ namespace CompVis_StableDiffusion_Api.Services
             try
             {
                 // Execute Conda commands
-                execResult = await ExecuteCondaScriptAsync(documentId, request, initImage?.FilePath, strength);
+                execResult = await ExecuteCondaScriptAsync(documentId, request, initImageFilePath, strength);
                 // Fix output
                 await ExecuteFixOutputImagesScriptAsync(documentId);
             }

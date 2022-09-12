@@ -26,14 +26,18 @@ namespace CompVis_StableDiffusion_Api.Services
                 percentage += i / commands.Length * 100;
                 _log.EphemeralLog("Fake executing command: " + command);
                 await Task.Delay(_rnd.Next(2000, 5000));
-                stdOutDataReceivedCallback.Invoke($"Fake output: {percentage}%");
+                stdOutDataReceivedCallback?.Invoke($"Fake output: {percentage}%");
             }
-            var dir = commands[2].Split("--outdir")[1].Trim();
-            //this image is a single pixel (black)
-            byte[] bytes = Convert.FromBase64String("R0lGODlhAQABAIAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICTAEAOw==");
-            Directory.CreateDirectory(Path.Combine(dir, "samples"));
-            File.WriteAllBytes(Path.Combine(dir, "samples", "00001.png"), bytes);
-            File.WriteAllBytes(Path.Combine(dir, "samples", "00002.png"), bytes);
+
+            if (commands.Length > 1 && commands[2].Contains("--outdir"))
+            {
+                var dir = commands[2].Split("--outdir")[1].Trim();
+                //this image is a single pixel (black)
+                byte[] bytes = Convert.FromBase64String("R0lGODlhAQABAIAAAAAAAAAAACH5BAAAAAAALAAAAAABAAEAAAICTAEAOw==");
+                Directory.CreateDirectory(Path.Combine(dir, "samples"));
+                File.WriteAllBytes(Path.Combine(dir, "samples", "00001.png"), bytes);
+                File.WriteAllBytes(Path.Combine(dir, "samples", "00002.png"), bytes);
+            }
 
             return new ExecuteResult()
             {
