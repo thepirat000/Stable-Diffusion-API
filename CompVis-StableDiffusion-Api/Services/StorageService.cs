@@ -153,10 +153,11 @@ namespace CompVis_StableDiffusion_Api.Services
                                 && d.Request.Prompt == request.Prompt
                                 && d.Status >= 0
                                 && d.Request.Steps == request.Steps
-                                && d.Request.Version == request.Version);
+                                && d.Request.Version == request.Version
+                                && d.Request.Seed == request.Seed);
                 if (initImageName != null)
                 {
-                    query = query.Where(d => d.InitImageName == initImageName);
+                    query = query.Where(d => d.InitImageName != null);
                 }
                 return await query.AnyAsync();
             }
