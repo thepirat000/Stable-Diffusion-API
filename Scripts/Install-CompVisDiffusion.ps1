@@ -43,7 +43,9 @@ choco install miniconda3 -y --no-progress
 
 ## 2. Install Stable diffusion
 
-git clone https://github.com/CompVis/stable-diffusion.git
+# Original from: https://github.com/CompVis/stable-diffusion.git
+# But using a custom Diffusers reference -> https://github.com/thepirat000/diffusers.git
+git clone https://github.com/thepirat000/stable-diffusion.git  
 cd stable-diffusion/
 
 # Download checkpoints
@@ -62,13 +64,14 @@ conda activate ldm
 ## 4. Command samples
 
 # 1 sample, 65 steps, v1-4
-python scripts/txt2img.py --prompt "A dinosaur in the style of Vincent van Gogh" --plms --ckpt sd-v1-4.ckpt --skip_grid --n_samples 1 --n_iter 1 --ddim_steps 65 --seed 12345
+# python scripts/txt2img.py --prompt "A dinosaur in the style of Vincent van Gogh" --plms --ckpt sd-v1-4.ckpt --skip_grid --n_samples 1 --n_iter 1 --ddim_steps 65 --seed 12345
 
 # 1 sample, 65 steps, v1-2
-python scripts/txt2img.py --prompt "A dinosaur in the style of Vincent van Gogh" --plms --ckpt sd-v1-2.ckpt --skip_grid --n_samples 1 --n_iter 1 --ddim_steps 65 --seed 12345
+# python scripts/txt2img.py --prompt "A dinosaur in the style of Vincent van Gogh" --plms --ckpt sd-v1-2.ckpt --skip_grid --n_samples 1 --n_iter 1 --ddim_steps 65 --seed 12345
 
 # 2 samples, 50 steps, v1-3
-python scripts/txt2img.py --prompt "A giraffe on an airplane" --plms --ckpt sd-v1-3.ckpt --skip_grid --n_samples 1 --n_iter 2 --ddim_steps 50 --seed 65537
+# python scripts/txt2img.py --prompt "A giraffe on an airplane" --plms --ckpt sd-v1-3.ckpt --skip_grid --n_samples 1 --n_iter 2 --ddim_steps 50 --seed 65537
 
 # 2 samples, 65 steps, v1-4
-python scripts/txt2img.py --prompt "A rock band playing under water" --plms --ckpt sd-v1-4.ckpt --skip_grid --n_samples 1 --n_iter 2 --ddim_steps 65 --seed 32
+# python scripts/txt2img.py --prompt "A rock band playing under water" --plms --ckpt sd-v1-4.ckpt --skip_grid --n_samples 1 --n_iter 2 --ddim_steps 65 --seed 32
+

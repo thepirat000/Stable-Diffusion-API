@@ -155,7 +155,6 @@ namespace CompVis_StableDiffusion_Api.Services
                         && d.CreatedDate > DateTimeOffset.Now.AddHours(-24)
                         && d.Request.Steps == request.Steps
                         && d.Request.Version == request.Version
-                        && d.Request.Steps == request.Steps
                         && (initImageName == null || d.InitImageName == initImageName))
                     .AnyAsync();
             }

@@ -6,6 +6,6 @@
         public string StorageDatabase { get; set; } = "Diffusion";
         public string WorkingDir { get; set; } = @"C:\GIT\stable-diffusion";
         public string CacheDir { get; set; } = @"C:\cache\diffusion";
-        public int WorkerCount { get; set; } = 2;
+        public int WorkerCount { get; set; } = 1;
     }
 }
