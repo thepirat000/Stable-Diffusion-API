@@ -110,14 +110,14 @@ namespace CompVis_StableDiffusion_Api.Services
         }
 
         // Main Job Process method for Img2Img
-        [JobDisplayName("Image to Image Job")]
+        [JobDisplayName("img2img {0} {1}")]
         public async Task ProcessImageToImageAsync(string clientId, string documentId, DiffusionRequest request, Attachment initImage, int? strength, PerformContext context)
         {
             await ProcessImplAsync(clientId, documentId, context.BackgroundJob.Id, request, initImage, strength);
         }
 
         // Main Job Process method for Txt2Img
-        [JobDisplayName("Text to Image Job")]
+        [JobDisplayName("txt2img {0} {1}")]
         public async Task ProcessTextToImageAsync(string clientId, string documentId, DiffusionRequest request, PerformContext context)
         {
             await ProcessImplAsync(clientId, documentId, context.BackgroundJob.Id, request, null, null);
@@ -128,6 +128,7 @@ namespace CompVis_StableDiffusion_Api.Services
             if (await _storageService.IsDuplicatedAsync(clientId, request, initImage?.FileName))
             {
                 _log.EphemeralLog($"Duplicated job found, will ignore request {documentId} for client {clientId}");
+                await _storageService.EndAsync(documentId, jobId, "Duplicated job");
                 return;
             }
 

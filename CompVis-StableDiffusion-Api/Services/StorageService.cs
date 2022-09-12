@@ -148,15 +148,17 @@ namespace CompVis_StableDiffusion_Api.Services
         {
             using (var session = _documentStore.OpenAsyncSession())
             {
-                return await session.Query<DiffusionDocument>()
-                    .Where(d => d.ClientId == clientId 
-                        && d.Request.Prompt == request.Prompt 
-                        && d.Status >= 0
-                        && d.CreatedDate > DateTimeOffset.Now.AddHours(-24)
-                        && d.Request.Steps == request.Steps
-                        && d.Request.Version == request.Version
-                        && (initImageName == null || d.InitImageName == initImageName))
-                    .AnyAsync();
+                var query = session.Query<DiffusionDocument>()
+                    .Where(d => d.ClientId == clientId
+                                && d.Request.Prompt == request.Prompt
+                                && d.Status >= 0
+                                && d.Request.Steps == request.Steps
+                                && d.Request.Version == request.Version);
+                if (initImageName != null)
+                {
+                    query = query.Where(d => d.InitImageName == initImageName);
+                }
+                return await query.AnyAsync();
             }
         }
     }
