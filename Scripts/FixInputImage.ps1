@@ -20,7 +20,7 @@ $height = [int]$dimensions[1]
 $outfile = $outputfilepath
 Write-Host $outfile
 
-if ($f.Length -lt 0.1MB) {
+if ($f.Length -lt 0.1MB -and $width -lt 513 -and $height -lt 513) {
     Write-Host "Skipping $($f.Name)"
     Exit 0
 }
