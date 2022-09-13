@@ -141,13 +141,23 @@ namespace CompVis_StableDiffusion_Api.Services
             }
         }
 
-        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent)
+        public async Task<List<DiffusionDocument>> QueryDocumentsAsync(string clientId, bool includeImageContent, 
+            int? statusGreaterThan = null, int? statusLowerThan = null,
+            int hoursFromNow = 24)
         {
             using (var session = _documentStore.OpenAsyncSession())
             {
-                var documents = await session.Query<DiffusionDocument>()
-                    .Where(d => d.ClientId == clientId && d.CreatedDate > DateTime.UtcNow.AddHours(-24))
-                    .ToListAsync();
+                var query = session.Query<DiffusionDocument>()
+                    .Where(d => d.ClientId == clientId && d.CreatedDate > DateTime.UtcNow.AddHours(-hoursFromNow));
+                if (statusGreaterThan.HasValue)
+                {
+                    query = query.Where(d => d.Status > statusGreaterThan.Value);
+                }
+                if (statusLowerThan.HasValue)
+                {
+                    query = query.Where(d => d.Status < statusLowerThan.Value);
+                }
+                var documents = await query.ToListAsync();
                 if (includeImageContent)
                 {
                     foreach (var doc in documents)

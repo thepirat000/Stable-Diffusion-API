@@ -1,0 +1,53 @@
+﻿@page
+@model CompVis_StableDiffusion_Api.Pages.Txt2ImgModel
+@{
+    ViewData["Title"] = "Text to Image generation";
+}
+
+
+<h1 class="display-4">Text to Image</h1>
+
+<div>
+    <table>
+        <tr>
+            <th>Prompt</th>
+            <th>
+                <input type="search" id="txtPrompt" name="Prompt" style="width: 640px; font-size: medium; padding-left: 6px; padding-bottom: 5px;"/>
+                <i class="fa fa-info-circle" title="Prompt text, for example 'a photorealistic vaporwave image of a lizard riding a snowboard through space'"></i>
+            </th>
+        </tr>
+        <tr>
+            <td>Version</td>
+            <td>
+                <select name="Version">
+                    <option value="1-2">1-2</option>
+                    <option value="1-3">1-3</option>
+                    <option value="1-4" selected>1-4</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>Samples</td>
+            <td>
+                <input type="number" id="txtSamples" name="Samples" value="1" min="1" max="10" style="width: 48px;"/>
+            </td>
+        </tr>
+        <tr>
+            <td>Steps</td>
+            <td>
+                <input type="number" id="txtSteps" name="Steps" value="50" min="10" max="100" style="width: 64px;"/>
+            </td>
+        </tr>
+            <td>Dimensions</td>
+            <td>
+                <select name="Dimensions">
+                    <option value="">512x512</option>
+                </select>
+            </td>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Run" style="width: 100px;"/></td>
+        </tr>
+    </table>
+    <hr/>
+</div>

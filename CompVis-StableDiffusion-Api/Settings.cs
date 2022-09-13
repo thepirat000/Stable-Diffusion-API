@@ -7,5 +7,6 @@
         public string WorkingDir { get; set; } = @"C:\GIT\stable-diffusion";
         public string CacheDir { get; set; } = @"C:\cache\diffusion";
         public int WorkerCount { get; set; } = 1;
+        public int QueueLimitByUser { get; set; } = 3;
     }
 }

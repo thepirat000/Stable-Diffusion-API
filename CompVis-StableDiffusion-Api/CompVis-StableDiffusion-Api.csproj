@@ -4,6 +4,11 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>CompVis_StableDiffusion_Api</RootNamespace>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+
+	<CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
+	<CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
+	<MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
+	<RazorCompileOnBuild>false</RazorCompileOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,13 +19,13 @@
     <PackageReference Include="Hangfire.Core" Version="1.7.31" />
     <PackageReference Include="Hangfire.MemoryStorage.Core" Version="1.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.HttpOverrides" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.9" />
     <PackageReference Include="RavenDb.Client" Version="5.4.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="PSScripts\" />
-    <Folder Include="Pages\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -31,7 +31,8 @@ namespace CompVis_StableDiffusion_Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            //services.AddRazorPages();
+
+            services.AddRazorPages();
 
             // Swagger
             services.AddSwaggerGen(c =>
@@ -124,7 +125,7 @@ namespace CompVis_StableDiffusion_Api
             app.UseCors(options => options.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapRazorPages();
+                endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapHangfireDashboard();
             });
@@ -139,7 +140,7 @@ namespace CompVis_StableDiffusion_Api
                         {
                             return Encoding.UTF8.GetBytes(ev.CustomFields["Status"] as string);
                         }
-                        else if (ev is Audit.WebApi.AuditEventWebApi)
+                        if (ev is Audit.WebApi.AuditEventWebApi)
                         {
                             var action = (ev as Audit.WebApi.AuditEventWebApi)!.Action;
                             var msg = $"Action: {action.ControllerName}/{action.ActionName}{new Uri(action.RequestUrl).Query} - Response: {action.ResponseStatusCode} {action.ResponseStatus}. Event: {action.ToJson()}";

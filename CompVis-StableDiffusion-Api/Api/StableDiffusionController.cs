@@ -122,10 +122,15 @@ namespace CompVis_StableDiffusion_Api.Api
         /// Returns the jobs for the current client
         /// </summary>
         /// <param name="includeImages">1 to return the image contents in the FileRef array</param>
+        /// <param name="statusLowerThan">Optional, to indicate the exclusive maximum value for the status to be returned</param>
+        /// <param name="statusGreaterThan">Optional, to indicate the exclusive minimum value for the status to be returned</param>
+        /// <param name="hoursFromNow">Optional, hours from now to look back, default is 24</param>
         [HttpGet("query")]
-        public async Task<IActionResult> Query([FromQuery(Name = "ii")] int includeImages)
+        public async Task<IActionResult> Query([FromQuery(Name = "ii")] int includeImages, 
+            [FromQuery(Name = "gt")] int? statusGreaterThan = null, [FromQuery(Name = "lt")] int? statusLowerThan = null,
+            [FromQuery(Name = "t")] int hoursFromNow = 24)
         {
-            var documents = await _txtToImgService.GetDocumentsForClientAsync(GetCurrentClientId(), includeImages == 1);
+            var documents = await _txtToImgService.QueryDocumentsAsync(GetCurrentClientId(), includeImages == 1, statusGreaterThan, statusLowerThan, hoursFromNow);
             if (documents == null || documents.Count == 0)
             {
                 return new NoContentResult();

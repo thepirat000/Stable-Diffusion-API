@@ -35,6 +35,13 @@ namespace CompVis_StableDiffusion_Api.Services
                 return new DiffusionResponse() { BadRequestError = "Duplicated job" };
             }
 
+            // Validate limits
+            var jobsProcessingCount  = (await _storageService.QueryDocumentsAsync(clientId, false, -1, 100, 24)).Count;
+            if (jobsProcessingCount >= _settings.QueueLimitByUser)
+            {
+                return new DiffusionResponse() { BadRequestError = "Too many jobs queued" };
+            }
+
             // Generate a new document ID
             var documentId = Guid.NewGuid().ToString("N")[0..16];
 
@@ -78,9 +85,11 @@ namespace CompVis_StableDiffusion_Api.Services
             return document;
         }
 
-        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent)
+        public async Task<List<DiffusionDocument>> QueryDocumentsAsync(string clientId, bool includeImageContent,
+            int? statusGreaterThan = null, int? statusLowerThan = null,
+            int hoursFromNow = 24)
         {
-            return await _storageService.GetDocumentsForClientAsync(clientId, includeImageContent);
+            return await _storageService.QueryDocumentsAsync(clientId, includeImageContent, statusGreaterThan, statusLowerThan, hoursFromNow);
         }
         
         public async Task<bool> CancelJobAsync(string clientId, string documentId)
