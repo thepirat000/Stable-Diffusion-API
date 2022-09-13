@@ -12,8 +12,8 @@ namespace CompVis_StableDiffusion_Api.Services
         Task<DiffusionDocument> EndAsync(string documentId, string jobId, string error = null);
         Task<DiffusionDocument> CancelAsync(string documentId);
         Task<DiffusionDocument> AttachAsync(string documentId, Attachment[] attachments);
-        Task<DiffusionDocument> GetDocumentAsync(string documentId);
-        Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId);
+        Task<DiffusionDocument> GetDocumentAsync(string documentId, bool includeImageContent);
+        Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent);
         Task<bool> IsDuplicatedAsync(string clientId, DiffusionRequest request, string initImageName);
     }
 }

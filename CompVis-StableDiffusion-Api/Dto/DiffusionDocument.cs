@@ -4,6 +4,9 @@ using Newtonsoft.Json;
 
 namespace CompVis_StableDiffusion_Api.Dto
 {
+    /// <summary>
+    /// Diffusion Document entity
+    /// </summary>
     public class DiffusionDocument
     {
         public string Id { get; set; }

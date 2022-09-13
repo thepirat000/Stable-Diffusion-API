@@ -71,9 +71,9 @@ namespace CompVis_StableDiffusion_Api.Services
             return new DiffusionResponse() { DocumentId = document.Id, JobId = jobId };
         }
         
-        public async Task<DiffusionDocument> GetDocumentAsync(string clientId, string documentId)
+        public async Task<DiffusionDocument> GetDocumentAsync(string clientId, string documentId, bool includeImageContent)
         {
-            var document = await _storageService.GetDocumentAsync(documentId);
+            var document = await _storageService.GetDocumentAsync(documentId, includeImageContent);
             
             if (document?.ClientId != null && document.ClientId != clientId) 
             {
@@ -82,14 +82,14 @@ namespace CompVis_StableDiffusion_Api.Services
             return document;
         }
 
-        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId)
+        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent)
         {
-            return await _storageService.GetDocumentsForClientAsync(clientId);
+            return await _storageService.GetDocumentsForClientAsync(clientId, includeImageContent);
         }
         
         public async Task<bool> CancelJobAsync(string clientId, string documentId)
         {
-            var document = await _storageService.GetDocumentAsync(documentId);
+            var document = await _storageService.GetDocumentAsync(documentId, false);
             if (document != null && document.ClientId != clientId)
             {
                 throw new ArgumentException("Wrong client ID");

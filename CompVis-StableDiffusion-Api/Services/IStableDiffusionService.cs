@@ -8,8 +8,8 @@ namespace CompVis_StableDiffusion_Api.Services
     public interface IStableDiffusionService
     {
         Task<DiffusionResponse> EnqueueJobAsync(string clientId, DiffusionRequest request, IFormFile initImageFormFile, int? strength);
-        Task<DiffusionDocument> GetDocumentAsync(string clientId, string documentId);
+        Task<DiffusionDocument> GetDocumentAsync(string clientId, string documentId, bool includeImageContent);
         Task<bool> CancelJobAsync(string clientId, string documentId);
-        Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId);
+        Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent);
     }
 }

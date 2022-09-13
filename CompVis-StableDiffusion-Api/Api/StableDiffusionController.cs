@@ -97,18 +97,19 @@ namespace CompVis_StableDiffusion_Api.Api
         }
 
         /// <summary>
-        /// Returns the status of a job processing
+        /// Returns the status of a job
         /// </summary>
         /// <param name="docId">The document ID</param>
+        /// <param name="includeImages">1 to return the image contents in the FileRef array</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<IActionResult> Status([FromQuery(Name = "d")] string docId)
+        public async Task<IActionResult> GetAsync([FromQuery(Name = "d")] string docId, [FromQuery(Name = "ii")] int includeImages)
         {
             if (string.IsNullOrEmpty(docId))
             {
                 return BadRequest("Invalid Document ID");
             }
-            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId);
+            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId, includeImages == 1);
             if (document == null)
             {
                 return new NoContentResult();
@@ -120,11 +121,11 @@ namespace CompVis_StableDiffusion_Api.Api
         /// <summary>
         /// Returns the jobs for the current client
         /// </summary>
-        /// <returns></returns>
+        /// <param name="includeImages">1 to return the image contents in the FileRef array</param>
         [HttpGet("query")]
-        public async Task<IActionResult> Query()
+        public async Task<IActionResult> Query([FromQuery(Name = "ii")] int includeImages)
         {
-            var documents = await _txtToImgService.GetDocumentsForClientAsync(GetCurrentClientId());
+            var documents = await _txtToImgService.GetDocumentsForClientAsync(GetCurrentClientId(), includeImages == 1);
             if (documents == null || documents.Count == 0)
             {
                 return new NoContentResult();
@@ -168,7 +169,7 @@ namespace CompVis_StableDiffusion_Api.Api
             {
                 return BadRequest("Invalid image index");
             }
-            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId);
+            var document = await _txtToImgService.GetDocumentAsync(GetCurrentClientId(), docId, false);
             if (document == null)
             {
                 return NoContent();

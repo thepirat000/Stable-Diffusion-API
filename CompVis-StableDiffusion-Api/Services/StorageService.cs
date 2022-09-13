@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Raven.Client.Documents.Operations.Attachments;
+using Raven.Client.Documents.Session;
 
 namespace CompVis_StableDiffusion_Api.Services
 {
@@ -125,22 +127,36 @@ namespace CompVis_StableDiffusion_Api.Services
             }
         }
 
-        public async Task<DiffusionDocument> GetDocumentAsync(string documentId)
+        public async Task<DiffusionDocument> GetDocumentAsync(string documentId, bool includeImageContent)
         {
             using (var session = _documentStore.OpenAsyncSession())
             {
                 var doc = await session.LoadAsync<DiffusionDocument>(documentId);
+                if (includeImageContent)
+                {
+                    await OverrideFileRefsWithImageBytesAsync(doc, session);
+                }
+
                 return doc;
             }
         }
 
-        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId)
+        public async Task<List<DiffusionDocument>> GetDocumentsForClientAsync(string clientId, bool includeImageContent)
         {
             using (var session = _documentStore.OpenAsyncSession())
             {
-                return await session.Query<DiffusionDocument>()
+                var documents = await session.Query<DiffusionDocument>()
                     .Where(d => d.ClientId == clientId && d.CreatedDate > DateTime.UtcNow.AddHours(-24))
                     .ToListAsync();
+                if (includeImageContent)
+                {
+                    foreach (var doc in documents)
+                    {
+                        await OverrideFileRefsWithImageBytesAsync(doc, session);
+                    }
+                }
+
+                return documents;
             }
         }
 
@@ -160,6 +176,34 @@ namespace CompVis_StableDiffusion_Api.Services
                     query = query.Where(d => d.InitImageName != null);
                 }
                 return await query.AnyAsync();
+            }
+        }
+
+        private async Task OverrideFileRefsWithImageBytesAsync(DiffusionDocument document, IAsyncDocumentSession session)
+        {
+            if (document?.FileRefs != null)
+            {
+                for (int i = 0; i < document.FileRefs.Count; i++)
+                {
+                    var filePath = document.FileRefs[i];
+                    var filename = Path.GetFileName(filePath);
+
+                    using (var attachment = await session.Advanced.Attachments.GetAsync(document.Id, filename))
+                    {
+                        if (attachment != null)
+                        {
+                            using (var ms = new MemoryStream())
+                            {
+                                await attachment.Stream.CopyToAsync(ms);
+                                document.FileRefs[i] = Convert.ToBase64String(ms.ToArray());
+                            }
+                        }
+                        else
+                        {
+                            document.FileRefs[i] = "";
+                        }
+                    }
+                }
             }
         }
     }
