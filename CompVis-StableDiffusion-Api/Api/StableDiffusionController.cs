@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Audit.WebApi;
 
 namespace CompVis_StableDiffusion_Api.Api
 {

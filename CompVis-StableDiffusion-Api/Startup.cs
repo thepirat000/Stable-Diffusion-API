@@ -1,19 +1,20 @@
+using Audit.Core;
+using Audit.WebApi;
+using CompVis_StableDiffusion_Api.Services;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using Hangfire;
-using Hangfire.MemoryStorage;
-using CompVis_StableDiffusion_Api.Services;
 using Raven.Client.Documents;
-using Audit.Core;
-using System.Text;
-using System.Reflection;
-using System.IO;
-using Microsoft.AspNetCore.HttpOverrides;
 using Raven.Client.Json.Serialization.NewtonsoftJson;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
 
 namespace CompVis_StableDiffusion_Api
 {
@@ -80,7 +81,12 @@ namespace CompVis_StableDiffusion_Api
                 opt.WorkerCount = settings.WorkerCount; 
             });
 
-            services.AddControllers();
+            services.AddControllers(c => c
+                .AddAuditFilter(config => config
+                    .LogActionIf(d => d.ControllerName == "StableDifussion" && d.ActionName != "dl")
+                    .WithEventType("{verb}.{controller}.{action}")
+                    .IncludeRequestBody()
+                    .IncludeResponseBody(ctx => ctx.HttpContext.Response.StatusCode == 200)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
