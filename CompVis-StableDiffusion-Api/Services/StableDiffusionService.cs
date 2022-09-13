@@ -169,7 +169,7 @@ namespace CompVis_StableDiffusion_Api.Services
 
             // Update status to Completed or Error
             await _storageService.EndAsync(documentId, jobId, error);
-            var status = error != null ? "Successfully" : "with Errors";
+            var status = error == null ? "Successfully" : "with Errors";
             _log.EphemeralLog($"Job {jobId} Completed {status}. Document {documentId} for '{request.Prompt}' {error}");
         }
 
