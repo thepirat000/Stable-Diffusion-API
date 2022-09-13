@@ -51,6 +51,18 @@ namespace CompVis_StableDiffusion_Api.Dto
         [DefaultValue(0)]
         public int Seed { get; set; }
 
+        /// <summary>
+        /// The output image width in pixels (default is 512)
+        /// </summary>
+        [DefaultValue(null)]
+        public int? Width { get; set; }
+
+        /// <summary>
+        /// The output image width in pixels (default is 512)
+        /// </summary>
+        [DefaultValue(null)]
+        public int? Height { get; set; }
+
         /// <inheritdoc/>
         public override string ToString()
         {

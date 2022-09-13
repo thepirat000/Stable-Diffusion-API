@@ -63,10 +63,6 @@ namespace CompVis_StableDiffusion_Api.Services
                 jobId = _backgroundJobClient.Enqueue(() => ProcessTextToImageAsync(clientId, documentId, request, null));
                 _log.EphemeralLog($"Enqueueing Txt2Img job {jobId}. Client {clientId} for '{request.Prompt}'");
             }
-            
-
-            // Update the document with the job ID
-            await _storageService.StartAsync(document.Id, jobId);
 
             return new DiffusionResponse() { DocumentId = document.Id, JobId = jobId };
         }
@@ -129,6 +125,9 @@ namespace CompVis_StableDiffusion_Api.Services
 
             // Start the job
             _log.EphemeralLog($"Starting job {jobId}. Document {documentId}. Client {clientId} for '{request.Prompt}'");
+
+            // Update the document with the job ID
+            await _storageService.StartAsync(documentId, jobId);
 
             string error = null;
             string[] outputFiles = null;
@@ -234,18 +233,21 @@ namespace CompVis_StableDiffusion_Api.Services
             var seed = request.Seed <= 0 ? new Random().Next() : request.Seed;
             var workingDir = _settings.WorkingDir;
             var outputDir = Path.Combine(_settings.CacheDir, documentId);
-            
+
+            var sizeParams = request.Width.HasValue ? $" -W {request.Width}" : "";
+            sizeParams += request.Height.HasValue ? $" -H {request.Height}" : "";
+
             string pythonCommand;
             if (initImageFilePath != null)
             {
                 // img2img
                 double strengthDbl = (double)strength.GetValueOrDefault(80) / 100;
-                pythonCommand = $"python scripts/img2img.py --prompt \"{prompt}\" --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --init-img \"{initImageFilePath}\" --strength {strengthDbl} --outdir {outputDir}";
+                pythonCommand = $"python scripts/img2img.py --prompt \"{prompt}\"{sizeParams} --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --init-img \"{initImageFilePath}\" --strength {strengthDbl} --outdir {outputDir}";
             }
             else
             {
                 // txt2img
-                pythonCommand = $"python scripts/txt2img.py --prompt \"{prompt}\" --plms --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --outdir {outputDir}";
+                pythonCommand = $"python scripts/txt2img.py --prompt \"{prompt}\"{sizeParams} --plms --ckpt sd-v{request.Version}.ckpt --skip_grid --n_samples 1 --n_iter {request.Samples} --ddim_steps {request.Steps} --seed {seed} --outdir {outputDir}";
             }
 
             var commands = new string[]

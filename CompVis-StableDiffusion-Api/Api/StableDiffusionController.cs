@@ -34,7 +34,7 @@ namespace CompVis_StableDiffusion_Api.Api
             }
             if (request.Version == null || request.Version.Length != 3 || request.Version[1] != '-')
             {
-                return BadRequest("Invalid version, must be 1-1, 1-2, 1-3 or 1-4");
+                return BadRequest("Invalid version, must be 1-2, 1-3 or 1-4");
             }
             if (request.Samples < 1 || request.Samples > 9)
             {
@@ -68,7 +68,7 @@ namespace CompVis_StableDiffusion_Api.Api
             }
             if (request.Version == null || request.Version.Length != 3 || request.Version[1] != '-')
             {
-                return BadRequest("Invalid version, must be 1-1, 1-2, 1-3 or 1-4");
+                return BadRequest("Invalid version, must be 1-2, 1-3 or 1-4");
             }
             if (request.Samples < 1 || request.Samples > 9)
             {
