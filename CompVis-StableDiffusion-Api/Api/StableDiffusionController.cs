@@ -46,9 +46,9 @@ namespace CompVis_StableDiffusion_Api.Api
             }
 
             var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request, null, null);
-            if (response?.BadRequestError != null)
+            if (response?.Error != null)
             {
-                return BadRequest(response.BadRequestError);
+                return BadRequest(response.Error);
             }
 
             return Ok(response);
@@ -88,9 +88,9 @@ namespace CompVis_StableDiffusion_Api.Api
             }
             
             var response = await _txtToImgService.EnqueueJobAsync(GetCurrentClientId(), request, request.InitImage, request.Strength);
-            if (response?.BadRequestError != null)
+            if (response?.Error != null)
             {
-                return BadRequest(response.BadRequestError);
+                return BadRequest(response.Error);
             }
 
             return Ok(response);

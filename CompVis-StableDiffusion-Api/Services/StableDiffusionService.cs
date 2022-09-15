@@ -32,14 +32,14 @@ namespace CompVis_StableDiffusion_Api.Services
             // Validate duplications
             if (await _storageService.IsDuplicatedAsync(clientId, request, initImageFormFile?.FileName))
             {
-                return new DiffusionResponse() { BadRequestError = "Duplicated job" };
+                return new DiffusionResponse() { Error = "Duplicated job" };
             }
 
             // Validate limits
             var jobsProcessingCount  = (await _storageService.QueryDocumentsAsync(clientId, false, -1, 100, 24)).Count;
             if (jobsProcessingCount >= _settings.QueueLimitByUser)
             {
-                return new DiffusionResponse() { BadRequestError = "Too many jobs queued" };
+                return new DiffusionResponse() { Error = "Too many jobs queued" };
             }
 
             // Generate a new document ID
@@ -243,8 +243,8 @@ namespace CompVis_StableDiffusion_Api.Services
             var workingDir = _settings.WorkingDir;
             var outputDir = Path.Combine(_settings.CacheDir, documentId);
 
-            var sizeParams = request.Width.HasValue ? $" -W {request.Width}" : "";
-            sizeParams += request.Height.HasValue ? $" -H {request.Height}" : "";
+            var sizeParams = request.Width.HasValue ? $" --W {request.Width}" : "";
+            sizeParams += request.Height.HasValue ? $" --H {request.Height}" : "";
 
             string pythonCommand;
             if (initImageFilePath != null)
